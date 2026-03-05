@@ -1,1 +1,92 @@
+import pandas as pd
+import numpy as np
+import seaborn as sns
 
+df = pd.read_csv("weather.csv", encoding='utf-8', delimiter=';', index_col=False, low_memory=False)
+print(df.head(10))
+df.info()
+
+# Вначале переименуем его для удобства работы в time
+df = df.rename(columns = {'Местное время в Рязани':'time'})
+
+# Теперь выполним конвертацию по шаблону
+df['time'] = pd.to_datetime(df['time'], format='%d.%m.%Y %H:%M')
+#df.groupby(pd.Grouper(key='time', freq="1D")).mean()
+
+print(df['N'].unique().tolist())
+
+def set_clouds(value):
+    if value == 'Облаков нет.':
+        return 0
+    if value == '10%  или менее, но не 0':
+        return 5
+    elif value == '20–30%.':
+        return 15
+    elif value == '40%.':
+        return 40
+    elif value == '50%.':
+        return 50
+    elif value == '60%.':
+        return 60
+    elif value == '70 – 80%.':
+        return 65
+    elif value == '90  или более, но не 100%':
+        return 95
+    elif value == '100%.':
+        return 100
+    else:
+      return np.nan
+
+df['clouds'] = df['N'].map(set_clouds)
+df = df.dropna(subset=['clouds'])
+df = df.drop(['N'], axis=1)
+df.info()
+
+
+#Задание 1
+
+df = df.dropna(subset=['T'])
+df = df.dropna(subset=['P'])
+df = df.dropna(subset=['U'])
+df = df.dropna(subset=['Ff'])
+
+df = df.drop(['Po'], axis=1)
+df = df.drop(['Pa'], axis=1)
+df = df.drop(['ff10'], axis=1)
+df = df.drop(['ff3'], axis=1)
+df = df.drop(['Tn'], axis=1)
+df = df.drop(['Tx'], axis=1)
+df = df.drop(['W1'], axis=1)
+df = df.drop(['W2'], axis=1)
+df = df.drop(['Nh'], axis=1)
+df = df.drop(['Unnamed: 29'], axis=1)
+
+print(df.head(10))
+df.info()
+
+#Задание 2
+test = dict()
+for column in df['H']:
+    if column not in test:
+        test[column] = 1
+    else:
+        test[column] += 1
+max_value = -1
+result = 0
+for key, value in test.items():
+    if value > max_value:
+        max_value = value
+        result = key
+print('Задание 2')
+print('-------------------------------')
+print(f'Самый частый тип облачности: {result}')
+print('-------------------------------')
+
+#Задание 3
+print('Задание 3')
+print('-------------------------------')
+print('Записи включающие слово "туман" ')
+print('-------------------------------')
+for column in df['WW']:
+    if ('туман' in column) or ('Туман' in column):
+        print(column)

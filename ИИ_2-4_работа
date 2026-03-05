@@ -90,3 +90,109 @@ print('-------------------------------')
 for column in df['WW']:
     if ('туман' in column) or ('Туман' in column):
         print(column)
+
+#Задание 4
+sns.set_style('darkgrid')
+
+plt.figure(figsize=(10, 10))
+sns.histplot(df['T'], bins=30, kde=True)
+plt.title('Распределение температур')
+plt.xlabel('Температура')
+plt.ylabel('Количество')
+plt.show()
+
+#Задание 5
+temp = {'Январь': 0,
+        'Февраль': 0,
+        'Март': 0,
+        'Апрель': 0,
+        'Май': 0,
+        'Июнь': 0,
+        'Июль': 0,
+        'Август': 0,
+        'Сентябрь': 0,
+        'Октябрь': 0,
+        'Ноябрь': 0,
+        'Декабрь': 0
+        }
+month_count = {'Январь': 0,
+        'Февраль': 0,
+        'Март': 0,
+        'Апрель': 0,
+        'Май': 0,
+        'Июнь': 0,
+        'Июль': 0,
+        'Август': 0,
+        'Сентябрь': 0,
+        'Октябрь': 0,
+        'Ноябрь': 0,
+        'Декабрь': 0
+        }
+
+for index, row in df.iterrows():
+    if row['time'].month == 1:
+        temp['Январь'] += row['T']
+        month_count['Январь'] += 1
+    elif row['time'].month == 2:
+        temp['Февраль'] += row['T']
+        month_count['Февраль'] += 1
+    elif row['time'].month == 3:
+        temp['Март'] += row['T']
+        month_count['Март'] += 1
+    elif row['time'].month == 4:
+        temp['Апрель'] += row['T']
+        month_count['Апрель'] += 1
+    elif row['time'].month == 5:
+        temp['Май'] += row['T']
+        month_count['Май'] += 1
+    elif row['time'].month == 6:
+        temp['Июнь'] += row['T']
+        month_count['Июнь'] += 1
+    elif row['time'].month == 7:
+        temp['Июль'] += row['T']
+        month_count['Июль'] += 1
+    elif row['time'].month == 8:
+        temp['Август'] += row['T']
+        month_count['Август'] += 1
+    elif row['time'].month == 9:
+        temp['Сентябрь'] += row['T']
+        month_count['Сентябрь'] += 1
+    elif row['time'].month == 10:
+        temp['Октябрь'] += row['T']
+        month_count['Октябрь'] += 1
+    elif row['time'].month == 11:
+        temp['Ноябрь'] += row['T']
+        month_count['Ноябрь'] += 1
+    elif row['time'].month == 12:
+        temp['Декабрь'] += row['T']
+        month_count['Декабрь'] += 1
+
+for key, value in temp.items():
+    temp[key] /= month_count[key]
+
+
+max_value = -1
+min_value = 100000000
+result_max = 0
+result_min = 0
+for key, value in temp.items():
+    if value > max_value:
+        max_value = value
+        result_max = key
+    if value < min_value:
+        min_value = value
+        result_min = key
+
+print('Задание 5')
+print('-------------------------------')
+print(f'Самый теплый месяц в 2024 году: {result_max} со средней температурой: {temp[result_max]}')
+print(f'Самый холодный месяц в 2024 году: {result_min} со средней температурой: {temp[result_min]}')
+print('-------------------------------')
+
+#Задание 6
+plt.figure(figsize=(10, 10))
+sns.regplot(x='T', y='P', data=df, scatter_kws={'alpha': 0.5, }, line_kws={'color': 'red'})
+plt.title('Зависимость температуры от давления')
+plt.xlabel('Температура')
+plt.ylabel('Давление')
+plt.show()

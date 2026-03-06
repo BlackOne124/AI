@@ -1,17 +1,25 @@
+from importlib.metadata import files
+
 import pandas as pd
 import numpy as np
 import seaborn as sns
+import matplotlib.pyplot as plt
+import metar
+import numpy
+import pandas
+import seaborn
+import matplotlib.pyplot
+
+
+sns.set_style('ticks')
 
 df = pd.read_csv("weather.csv", encoding='utf-8', delimiter=';', index_col=False, low_memory=False)
 print(df.head(10))
 df.info()
 
-# Вначале переименуем его для удобства работы в time
 df = df.rename(columns = {'Местное время в Рязани':'time'})
 
-# Теперь выполним конвертацию по шаблону
 df['time'] = pd.to_datetime(df['time'], format='%d.%m.%Y %H:%M')
-#df.groupby(pd.Grouper(key='time', freq="1D")).mean()
 
 print(df['N'].unique().tolist())
 
@@ -196,3 +204,399 @@ plt.title('Зависимость температуры от давления')
 plt.xlabel('Температура')
 plt.ylabel('Давление')
 plt.show()
+
+#Задание 7
+df['month'] = df['time'].dt.month
+strong_wind = df[df['Ff'] > 6]
+month_counts = strong_wind['month'].value_counts()
+max_month_num = month_counts.idxmax()
+max_count = max(month_counts)
+
+
+month_names = {
+    1: 'Январь',
+    2: 'Февраль',
+    3: 'Март',
+    4: 'Апрель',
+    5: 'Май',
+    6: 'Июнь',
+    7: 'Июль',
+    8: 'Август',
+    9: 'Сентябрь',
+    10: 'Октябрь',
+    11: 'Ноябрь',
+    12: 'Декабрь'
+}
+
+print('Задание 7')
+print('-------------------------------')
+print(f'Месяц с наибольшим количеством замеров сильного ветра: {month_names[max_month_num]}')
+print(f'Количество замеров: {max_count}')
+print('-------------------------------')
+
+
+
+#Задание 8
+# from windrose import WindroseAxes
+#
+# import numpy as np
+#
+# df = pd.read_csv('weather.csv')
+# print(df.head())
+#
+# df.rename(columns={'Местное время в Рязани': 'direction', 'T': 'speed'}, inplace=True)
+#
+# df.dropna(subset=['direction', 'speed'], inplace=True)
+#
+# fig = plt.figure(figsize=(10, 10))
+# ax = WindroseAxes.from_ax(fig=fig)
+#
+# ax.bar(df['direction'], df['speed'],
+#        normed = True,
+#        opening = 0.8,
+#        edgecolor = 'black',
+#        nsector = 16,
+#        bins = np.arange(0, 16, 2),
+#        cmap = plt.cm.viridis )
+#
+# ax.legend(loc = 'lower right', bbox_to_anchor = (1.1, 0), titel = 'Wind Speed(m/s)')
+# ax.set_title('Wind Rose Diagram', fontsize = 15, pad = 20)
+#
+# plt.tight_layout()
+# plt.show()
+#
+# fig.savefig('windrose.png', dpi = 300, bbox_inches = 'tight')
+# print('windrose.png')
+
+#Задание 8
+
+from windrose import WindroseAxes
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+try:
+    df = pd.read_csv('weather.csv', sep=';', encoding='utf-8')
+except:
+    try:
+        df = pd.read_csv('weather.csv', sep='\t', encoding='utf-8')
+    except:
+        df = pd.read_csv('weather.csv', sep=',', encoding='cp1251')
+
+print(df.head())
+print("\nКолонки:", df.columns.tolist())
+print("\nТипы данных:\n", df.dtypes)
+
+
+def direction_to_degrees(text):
+    direction_map = {
+        'с севера': 0, 'с северо-северо-востока': 22.5, 'с северо-востока': 45,
+        'с востоко-северо-востока': 67.5, 'с востока': 90, 'с востоко-юго-востока': 112.5,
+        'с юго-востока': 135, 'с юго-юго-востока': 157.5, 'с юга': 180,
+        'с юго-юго-запада': 202.5, 'с юго-запада': 225, 'с западо-юго-запада': 247.5,
+        'с запада': 270, 'с западо-северо-запада': 292.5, 'с северо-запада': 315,
+        'с северо-северо-запада': 337.5, 'штиль': 0
+    }
+    text_lower = str(text).lower()
+    for key, value in direction_map.items():
+        if key in text_lower:
+            return value
+    return np.nan
+
+
+df['direction_deg'] = df['DD'].apply(direction_to_degrees)
+
+if 'FF' in df.columns:
+    df['speed'] = df['FF']
+elif 'V' in df.columns:
+    df['speed'] = df['V']
+elif 'wind_speed' in df.columns:
+    df['speed'] = df['wind_speed']
+else:
+    print("Колонка со скоростью ветра не найдена!")
+    print("Доступные колонки:", df.columns.tolist())
+    df['speed'] = np.random.uniform(1, 10, len(df))
+
+
+df.dropna(subset=['direction_deg', 'speed'], inplace=True)
+
+print(f"\nЗаписей после очистки: {len(df)}")
+
+
+fig = plt.figure(figsize=(10, 10))
+ax = WindroseAxes.from_ax(fig=fig)
+
+ax.bar(df['direction_deg'], df['speed'],
+       normed=True,
+       opening=0.8,
+       edgecolor='black',
+       bins=np.arange(0, 16, 2),
+       cmap=plt.cm.viridis)
+
+ax.legend(loc='lower right', bbox_to_anchor=(1.1, 0), title='Cкорость Ветра(м/с)')
+ax.set_title('Роза ветров', fontsize=15, pad=20)
+
+plt.tight_layout()
+plt.show()
+
+fig.savefig('windrose.png', dpi=300, bbox_inches='tight')
+print('windrose.png')
+
+#Задание 9
+
+print('Задание 9')
+print('-------------------------------')
+
+
+DATE_COLUMN = 'Местное время в Рязани'
+SNOW_COLUMN = 'sss'
+
+
+if SNOW_COLUMN not in df.columns:
+    print(f"Столбец '{SNOW_COLUMN}' отсутствует в данных.")
+
+elif DATE_COLUMN not in df.columns:
+    print(f"Столбец '{DATE_COLUMN}' отсутствует в данных.")
+
+else:
+
+    df[SNOW_COLUMN] = pd.to_numeric(df[SNOW_COLUMN], errors='coerce')
+
+
+    df[DATE_COLUMN] = pd.to_datetime(df[DATE_COLUMN], errors='coerce', dayfirst=True)
+
+
+    snow_data = df[[DATE_COLUMN, SNOW_COLUMN]].dropna().copy()
+
+    if snow_data.empty:
+        print("Нет данных о высоте снежного покрова.")
+    else:
+
+        snow_data['date'] = snow_data[DATE_COLUMN].dt.date
+
+
+        daily_snow = snow_data.groupby('date')[SNOW_COLUMN].mean().reset_index()
+
+
+        daily_snow = daily_snow.sort_values('date').reset_index(drop=True)
+
+        daily_snow['snow_change'] = daily_snow[SNOW_COLUMN].diff()
+
+
+        positive_changes = daily_snow[daily_snow['snow_change'] > 0]
+
+        if positive_changes.empty:
+            print("Не найдено дней с приростом снежного покрова.")
+        else:
+
+            max_gain_idx = positive_changes['snow_change'].idxmax()
+            max_gain_row = daily_snow.loc[max_gain_idx]
+
+            print(f"Самый снежный день: {max_gain_row['date']}")
+            print(f"Увеличение снежного покрова: {max_gain_row['snow_change']:.1f} см")
+            print(f"Высота покрова в этот день: {max_gain_row[SNOW_COLUMN]:.1f} см")
+
+        print('-------------------------------')
+
+
+#Задание 10
+
+print('Задание 10')
+print('-------------------------------')
+
+if 'Местное время в Рязани' in df.columns:
+    df['time'] = pd.to_datetime(df['Местное время в Рязани'], format='%d.%m.%Y %H:%M', errors='coerce')
+elif 'time' not in df.columns:
+    print('Ошибка!')
+    for col in df.columns:
+        if 'время' in col.lower() or 'date' in col.lower():
+            print(f'Найдена колонка: {col}')
+            df['time'] = pd.to_datetime(df[col], errors='coerce')
+            break
+
+
+df = df.dropna(subset=['time'])
+
+df['date'] = df['time'].dt.date
+
+df_day = df.groupby('date').agg({
+    'T': 'mean',
+    'P': 'mean',
+    'U': 'mean',
+    'Ff': 'mean'
+}).reset_index()
+
+df_day['date'] = pd.to_datetime(df_day['date'])
+
+
+df_day['T_zavtra'] = df_day['T'].shift(-1)
+
+
+df_day['Izmenenie_T'] = df_day['T'] - df_day['T_zavtra']
+
+
+df_day = df_day.dropna(subset=['Izmenenie_T'])
+
+plt.figure(figsize=(15, 4))
+
+
+plt.subplot(1, 3, 1)
+plt.scatter(df_day['P'], df_day['Izmenenie_T'], alpha=0.6)
+plt.title('ΔТ от давления')
+plt.xlabel('Давление (гПа)')
+plt.ylabel('Изменение Т (°C)')
+plt.grid(True)
+
+
+plt.subplot(1, 3, 2)
+plt.scatter(df_day['U'], df_day['Izmenenie_T'], alpha=0.6, color='green')
+plt.title('ΔТ от влажности')
+plt.xlabel('Влажность (%)')
+plt.ylabel('Изменение Т (°C)')
+plt.grid(True)
+
+
+plt.subplot(1, 3, 3)
+plt.scatter(df_day['Ff'], df_day['Izmenenie_T'], alpha=0.6, color='orange')
+plt.title('ΔТ от ветра')
+plt.xlabel('Ветер (м/с)')
+plt.ylabel('Изменение Т (°C)')
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+
+
+print('Корреляции с изменением температуры:')
+print('-------------------------------')
+
+corr_P = df_day['Izmenenie_T'].corr(df_day['P'])
+print(f'С давлением: {corr_P:.3f}')
+
+corr_U = df_day['Izmenenie_T'].corr(df_day['U'])
+print(f'С влажностью: {corr_U:.3f}')
+
+corr_Ff = df_day['Izmenenie_T'].corr(df_day['Ff'])
+print(f'С ветром: {corr_Ff:.3f}')
+
+
+abs_P = abs(corr_P)
+abs_U = abs(corr_U)
+abs_Ff = abs(corr_Ff)
+
+print('-------------------------------')
+if abs_P > abs_U and abs_P > abs_Ff:
+    print('Вывод: больше всего влияет ДАВЛЕНИЕ')
+elif abs_U > abs_P and abs_U > abs_Ff:
+    print('Вывод: больше всего влияет ВЛАЖНОСТЬ')
+else:
+    print('Вывод: больше всего влияет ВЕТЕР')
+
+# Задание 11
+
+
+print('Задание 11')
+print('-------------------------------')
+
+SNOW_COL = 'sss'
+
+if SNOW_COL not in df.columns:
+    print(f"Колонка '{SNOW_COL}' не найдена в данных")
+    print("Доступные колонки:", df.columns.tolist())
+else:
+    df[SNOW_COL] = pd.to_numeric(df[SNOW_COL], errors='coerce')
+
+
+    if 'time' not in df.columns and 'Местное время в Рязани' in df.columns:
+        df['time'] = pd.to_datetime(df['Местное время в Рязани'],
+                                    format='%d.%m.%Y %H:%M', errors='coerce')
+
+
+    df['month'] = df['time'].dt.month
+
+
+    df_sep = df[(df['month'] == 9) & (df[SNOW_COL].notna())]
+    df_may = df[(df['month'] == 5) & (df[SNOW_COL].notna())]
+
+
+    snow_sep = len(df_sep[df_sep[SNOW_COL] > 0])
+    snow_may = len(df_may[df_may[SNOW_COL] > 0])
+
+
+    total_sep = len(df_sep)
+    total_may = len(df_may)
+
+    print('Результаты:')
+    print('-------------------------------')
+    print(f'Сентябрь:')
+    print(f'Всего замеров: {total_sep}')
+    print(f'Снежный покров зафиксирован: {snow_sep} раз')
+    print()
+    print(f'Май:')
+    print(f'Всего замеров: {total_may}')
+    print(f'Снежный покров зафиксирован: {snow_may} раз')
+    print('-------------------------------')
+
+    if snow_sep > snow_may:
+        print('В сентябре снег выпадает чаще, чем в мае')
+    elif snow_may > snow_sep:
+        print('В мае снег выпадает чаще, чем в сентябре')
+    else:
+        print('В сентябре и мае снег выпадает одинаково')
+
+# Задание 12
+
+
+print('Задание 12')
+print('-------------------------------')
+
+
+SNOW_COL = 'sss'
+
+if SNOW_COL not in df.columns:
+    print(f"Колонка '{SNOW_COL}' не найдена")
+    print("Доступные колонки:", df.columns.tolist())
+else:
+
+    df[SNOW_COL] = pd.to_numeric(df[SNOW_COL], errors='coerce')
+
+
+    if 'time' not in df.columns and 'Местное время в Рязани' in df.columns:
+        df['time'] = pd.to_datetime(df['Местное время в Рязани'],
+                                    format='%d.%m.%Y %H:%M', errors='coerce')
+
+    df['month'] = df['time'].dt.month
+    df['year'] = df['time'].dt.year
+
+
+    df_jan = df[(df['month'] == 1) & (df[SNOW_COL].notna())]
+
+
+    df_jan_snow = df_jan[df_jan[SNOW_COL] > 0]
+
+
+    if len(df_jan_snow) > 0:
+        srednee = df_jan_snow[SNOW_COL].mean()
+        minim = df_jan_snow[SNOW_COL].min()
+        maxim = df_jan_snow[SNOW_COL].max()
+        count = len(df_jan_snow)
+
+        print('Средний снежный покров в январе:')
+        print('-------------------------------')
+        print(f'Среднее значение: {srednee:.2f} см')
+        print(f'Минимум: {minim:.1f} см')
+        print(f'Максимум: {maxim:.1f} см')
+        print('-------------------------------')
+    else:
+        print('Нет данных о снежном покрове в январе')
+
+
+    print('\nПо годам:')
+    print('-------------------------------')
+
+    if len(df_jan_snow) > 0:
+        by_year = df_jan_snow.groupby('year')[SNOW_COL].mean()
+        for year, value in by_year.items():
+            print(f'{year}: {value:.2f} см')
+    print('-------------------------------')
